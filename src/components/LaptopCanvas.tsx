@@ -62,44 +62,51 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
 
   // 4. Render Loop
   useEffect(() => {
+    let animationFrameId: number;
+    let lastDrawnIndex = -1;
+
     const render = () => {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx || images.length === 0) return;
 
-      // Enhance sharpness
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      const currentFrame = Math.floor(currentIndex.get());
 
-      const frameIndex = Math.floor(currentIndex.get());
-      const img = images[frameIndex];
+      if (currentFrame !== lastDrawnIndex) {
+        // Enhance sharpness
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-      if (img) {
-        const canvasAspect = canvas.width / canvas.height;
-        const imgAspect = img.width / img.height;
-        let drawWidth, drawHeight, offsetX, offsetY;
+        const img = images[currentFrame];
 
-        // "Maintain image proportions to 100%" -> Using contain logic
-        if (canvasAspect > imgAspect) {
-          drawHeight = canvas.height;
-          drawWidth = canvas.height * imgAspect;
-          offsetX = (canvas.width - drawWidth) / 2;
-          offsetY = 0;
-        } else {
-          drawWidth = canvas.width;
-          drawHeight = canvas.width / imgAspect;
-          offsetX = 0;
-          offsetY = (canvas.height - drawHeight) / 2;
+        if (img) {
+          const canvasAspect = canvas.width / canvas.height;
+          const imgAspect = img.width / img.height;
+          let drawWidth, drawHeight, offsetX, offsetY;
+
+          // "Maintain image proportions to 100%" -> Using contain logic
+          if (canvasAspect > imgAspect) {
+            drawHeight = canvas.height;
+            drawWidth = canvas.height * imgAspect;
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+          } else {
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / imgAspect;
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+          }
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          lastDrawnIndex = currentFrame;
         }
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       }
-      requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(render);
     };
 
-    const animationFrame = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animationFrame);
+    animationFrameId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [images, currentIndex]);
 
   useEffect(() => {

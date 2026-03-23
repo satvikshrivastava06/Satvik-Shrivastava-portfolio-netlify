@@ -145,43 +145,50 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSo
 
   // 4. Render Loop
   useEffect(() => {
+    let animationFrameId: number;
+    let lastDrawnIndex = -1;
+
     const render = () => {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx || images.length === 0) return;
 
-      // Highest Quality
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-
       const currentFrame = Math.floor(frameIndex.get());
-      const img = images[currentFrame];
+      
+      if (currentFrame !== lastDrawnIndex) {
+        // Highest Quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-      if (img) {
-        const canvasAspect = canvas.width / canvas.height;
-        const imgAspect = img.width / img.height;
-        let drawWidth, drawHeight;
+        const img = images[currentFrame];
 
-        // "Zoom-out" -> Using contain logic (100% proportion)
-        const scaleFactor = 1.15; // Zoom-in a little (reduced slightly)
-        if (canvasAspect > imgAspect) {
-          drawHeight = canvas.height * scaleFactor;
-          drawWidth = canvas.height * imgAspect * scaleFactor;
-        } else {
-          drawWidth = canvas.width * scaleFactor;
-          drawHeight = canvas.width / imgAspect * scaleFactor;
+        if (img) {
+          const canvasAspect = canvas.width / canvas.height;
+          const imgAspect = img.width / img.height;
+          let drawWidth, drawHeight;
+
+          // "Zoom-out" -> Using contain logic (100% proportion)
+          const scaleFactor = 1.15; // Zoom-in a little (reduced slightly)
+          if (canvasAspect > imgAspect) {
+            drawHeight = canvas.height * scaleFactor;
+            drawWidth = canvas.height * imgAspect * scaleFactor;
+          } else {
+            drawWidth = canvas.width * scaleFactor;
+            drawHeight = canvas.width / imgAspect * scaleFactor;
+          }
+          const offsetX = (canvas.width - drawWidth) / 2;
+          const offsetY = (canvas.height - drawHeight) / 2;
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          lastDrawnIndex = currentFrame;
         }
-        const offsetX = (canvas.width - drawWidth) / 2;
-        const offsetY = (canvas.height - drawHeight) / 2;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       }
-      requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(render);
     };
 
-    const animationFrame = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animationFrame);
+    animationFrameId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [images, frameIndex]);
 
   useEffect(() => {

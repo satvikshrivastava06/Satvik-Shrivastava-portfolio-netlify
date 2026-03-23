@@ -182,43 +182,51 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
 
   // 4. Render Loop
   useEffect(() => {
+    let animationFrameId: number;
+    let lastDrawnIndex = -1;
+
     const render = () => {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx || images.length === 0) return;
 
       const frameIndex = Math.floor(currentIndex.get());
-      const img = images[frameIndex];
+      
+      if (frameIndex !== lastDrawnIndex) {
+        const img = images[frameIndex];
 
-      if (img) {
-        const canvasAspect = canvas.width / canvas.height;
-        const imgAspect = img.width / img.height;
-        let drawWidth, drawHeight;
+        if (img) {
+          const canvasAspect = canvas.width / canvas.height;
+          const imgAspect = img.width / img.height;
+          let drawWidth, drawHeight;
 
-        // "Zoom in a little" -> Scale up the contain logic by 1.2x
-        const zoomFactor = 1.2;
+          // "Zoom in a little" -> Scale up the contain logic by 1.2x
+          const zoomFactor = 1.2;
 
-        if (canvasAspect > imgAspect) {
-          drawHeight = canvas.height * zoomFactor;
-          drawWidth = drawHeight * imgAspect;
-        } else {
-          drawWidth = canvas.width * zoomFactor;
-          drawHeight = drawWidth / imgAspect;
+          if (canvasAspect > imgAspect) {
+            drawHeight = canvas.height * zoomFactor;
+            drawWidth = drawHeight * imgAspect;
+          } else {
+            drawWidth = canvas.width * zoomFactor;
+            drawHeight = drawWidth / imgAspect;
+          }
+          
+          const offsetX = (canvas.width - drawWidth) / 2;
+          const offsetY = (canvas.height - drawHeight) / 2;
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          
+          lastDrawnIndex = frameIndex;
         }
-        
-        const offsetX = (canvas.width - drawWidth) / 2;
-        const offsetY = (canvas.height - drawHeight) / 2;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       }
-      requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(render);
     };
 
-    const animationFrame = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animationFrame);
+    animationFrameId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [images, currentIndex]);
 
   // Handle Resize
