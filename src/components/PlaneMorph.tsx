@@ -99,8 +99,9 @@ export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count }) => {
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        canvasRef.current.width = window.innerWidth * window.devicePixelRatio;
-        canvasRef.current.height = window.innerHeight * window.devicePixelRatio;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvasRef.current.width = window.innerWidth * dpr;
+        canvasRef.current.height = window.innerHeight * dpr;
       }
     };
     window.addEventListener("resize", handleResize);
@@ -121,7 +122,7 @@ export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count }) => {
   const canvasOpacity = useTransform(scrollYProgress, [0, 0.6, 0.65, 1], [1, 1, 0, 0]);
 
   return (
-    <div ref={containerRef} className="relative h-[600vh] bg-transparent">
+    <div ref={containerRef} className="relative h-[500vh] bg-transparent">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
         {!isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center text-stone-500 font-mono text-sm tracking-widest uppercase">
@@ -134,7 +135,10 @@ export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count }) => {
         
         <motion.canvas
           ref={canvasRef}
-          style={{ opacity: isLoaded ? canvasOpacity : 0 }}
+          style={{ 
+            opacity: isLoaded ? canvasOpacity : 0,
+            willChange: 'transform, opacity'
+          }}
           className="absolute inset-0 h-full w-full object-contain pointer-events-none"
         />
 

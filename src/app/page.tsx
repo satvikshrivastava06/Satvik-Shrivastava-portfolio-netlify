@@ -38,10 +38,10 @@ export default function Home() {
       <div className="relative z-10 w-full">
         <HeroCanvas s1Count={240} s2Count={240} s3Count={240} />
         {/* Cinematic distance showing only the live clouds */}
-        <div className="h-[250vh] w-full bg-transparent pointer-events-none" />
+        <div className="h-[60vh] w-full bg-transparent pointer-events-none" />
         <PlaneMorph s4Count={160} />
         {/* Cinematic distance showing only the live clouds */}
-        <div className="h-[150vh] w-full bg-transparent pointer-events-none" />
+        <div className="h-[60vh] w-full bg-transparent pointer-events-none" />
         <LaptopCanvas frameCount={125} />
         <KeyboardCanvas frameCount={189} />
         <GlobeFooter />

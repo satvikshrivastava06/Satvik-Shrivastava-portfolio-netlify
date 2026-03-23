@@ -105,8 +105,8 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        // High DPI scaling (Sharper resolution)
-        const dpr = window.devicePixelRatio || 1;
+        // High DPI scaling (Sharper resolution, capped for performance)
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvasRef.current.width = window.innerWidth * dpr;
         canvasRef.current.height = window.innerHeight * dpr;
       }
@@ -117,7 +117,7 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative h-[600vh] bg-transparent">
+    <div ref={containerRef} className="relative h-[400vh] bg-transparent">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col items-center justify-center pointer-events-none">
         
         {/* Apple Intelligence Style Glowing Text */}
@@ -168,7 +168,8 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
           style={{ 
             opacity: isLoaded ? 1 : 0,
             width: '100vw',
-            height: '100vh'
+            height: '100vh',
+            willChange: 'transform, opacity'
           }}
           className="absolute inset-0 z-0 pointer-events-none"
         />

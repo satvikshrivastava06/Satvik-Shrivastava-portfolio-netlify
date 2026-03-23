@@ -111,8 +111,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        // High DPI scaling (Sharper resolution)
-        const dpr = window.devicePixelRatio || 1;
+        // High DPI scaling (Sharper resolution, capped for performance)
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvasRef.current.width = window.innerWidth * dpr;
         canvasRef.current.height = window.innerHeight * dpr;
       }
@@ -123,7 +123,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
   }, []);
 
   return (
-    <div ref={containerRef} className="relative h-[600vh] bg-transparent">
+    <div ref={containerRef} className="relative h-[400vh] bg-transparent">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center pointer-events-none">
         {!isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center text-stone-500 font-mono text-sm tracking-widest uppercase pointer-events-none">
@@ -139,7 +139,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
           style={{ 
             opacity: isLoaded ? 1 : 0,
             width: '100vw',
-            height: '100vh'
+            height: '100vh',
+            willChange: 'transform, opacity'
           }}
           className="absolute inset-0 z-0 pointer-events-none"
         />
