@@ -14,6 +14,7 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const totalFrames = s1Count + s2Count + s3Count;
 
@@ -31,24 +32,27 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
     let loadedCount = 0;
     const loadedImages: HTMLImageElement[] = [];
 
+    const updateProgress = () => {
+      loadedCount++;
+      setProgress(Math.floor((loadedCount / totalFrames) * 100));
+      if (loadedCount === totalFrames) {
+        setImages(loadedImages);
+        setIsLoaded(true);
+      }
+    };
+
     allImagePaths.forEach((path, index) => {
       const img = new Image();
-      img.src = path;
+      // Set handlers BEFORE src to avoid race conditions with cache
       img.onload = () => {
-        loadedCount++;
         loadedImages[index] = img;
-        if (loadedCount === totalFrames) {
-          setImages(loadedImages);
-          setIsLoaded(true);
-        }
+        updateProgress();
       };
       img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === totalFrames) {
-          setImages(loadedImages);
-          setIsLoaded(true);
-        }
+        console.error(`Failed to load image: ${path}`);
+        updateProgress();
       };
+      img.src = path;
     });
   }, [allImagePaths, totalFrames]);
 
@@ -126,6 +130,9 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
             <div className="flex flex-col items-center gap-4">
               <div className="w-6 h-6 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
               Preparing Portfolio...
+              <div className="text-[10px] opacity-40 font-bold tabular-nums">
+                {progress}%
+              </div>
             </div>
           </div>
         )}
