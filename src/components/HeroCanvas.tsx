@@ -129,7 +129,7 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
           <div className="absolute inset-0 flex items-center justify-center text-stone-500 font-mono text-sm tracking-widest uppercase z-10">
             <div className="flex flex-col items-center gap-4">
               <div className="w-6 h-6 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
-              Preparing Portfolio...
+              PREPARING PORTFOLIO...
               <div className="text-[10px] opacity-40 font-bold tabular-nums">
                 {progress}%
               </div>
