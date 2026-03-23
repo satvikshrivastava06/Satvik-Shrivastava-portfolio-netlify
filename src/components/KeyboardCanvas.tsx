@@ -75,7 +75,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
       if (img) {
         const canvasAspect = canvas.width / canvas.height;
         const imgAspect = img.width / img.height;
-        let drawWidth, drawHeight, offsetX, offsetY;
+        let drawWidth, drawHeight;
 
         // "Zoom-out" -> Using contain logic (100% proportion)
         const scaleFactor = 1.15; // Zoom-in a little (reduced slightly)
@@ -86,8 +86,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
           drawWidth = canvas.width * scaleFactor;
           drawHeight = canvas.width / imgAspect * scaleFactor;
         }
-        offsetX = (canvas.width - drawWidth) / 2;
-        offsetY = (canvas.height - drawHeight) / 2;
+        const offsetX = (canvas.width - drawWidth) / 2;
+        const offsetY = (canvas.height - drawHeight) / 2;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);

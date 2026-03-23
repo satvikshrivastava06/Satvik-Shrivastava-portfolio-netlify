@@ -77,7 +77,7 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
       if (img) {
         const canvasAspect = canvas.width / canvas.height;
         const imgAspect = img.width / img.height;
-        let drawWidth, drawHeight, offsetX, offsetY;
+        let drawWidth, drawHeight;
 
         // "Zoom in a little" -> Scale up the contain logic by 1.2x
         const zoomFactor = 1.2;
@@ -90,8 +90,8 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
           drawHeight = drawWidth / imgAspect;
         }
         
-        offsetX = (canvas.width - drawWidth) / 2;
-        offsetY = (canvas.height - drawHeight) / 2;
+        const offsetX = (canvas.width - drawWidth) / 2;
+        const offsetY = (canvas.height - drawHeight) / 2;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.imageSmoothingEnabled = true;
