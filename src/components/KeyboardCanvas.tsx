@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useScroll, useTransform, motion } from "framer-motion";
+import { useScroll, useTransform, motion, useSpring } from "framer-motion";
 
 interface KeyboardCanvasProps {
   frameCount: number;
@@ -54,9 +54,18 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
     offset: ["start start", "end end"],
   });
 
-  // Map 0-0.8 scroll progress to 0-199 index.
-  // Hold final frame for the last 20%
-  const currentIndex = useTransform(scrollYProgress, [0, 0.8, 1], [0, frameCount - 1, frameCount - 1]);
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 150,
+    damping: 25,
+    restDelta: 0.001
+  });
+
+  const frameIndex = useTransform(smoothProgress, (latest: number) =>
+    Math.min(
+      frameCount - 1,
+      Math.floor(latest * (frameCount + 1)) // Add small buffer to reach last frame faster
+    )
+  );
 
   // 4. Render Loop
   useEffect(() => {
@@ -69,8 +78,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      const frameIndex = Math.floor(currentIndex.get());
-      const img = images[frameIndex];
+      const currentFrame = Math.floor(frameIndex.get());
+      const img = images[currentFrame];
 
       if (img) {
         const canvasAspect = canvas.width / canvas.height;
@@ -97,7 +106,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
 
     const animationFrame = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrame);
-  }, [images, currentIndex]);
+  }, [images, frameIndex]);
 
   useEffect(() => {
     const handleResize = () => {

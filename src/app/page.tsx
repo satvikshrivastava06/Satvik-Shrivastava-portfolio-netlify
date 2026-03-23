@@ -43,7 +43,7 @@ export default function Home() {
         {/* Cinematic distance showing only the live clouds */}
         <div className="h-[150vh] w-full bg-transparent pointer-events-none" />
         <LaptopCanvas frameCount={125} />
-        <KeyboardCanvas frameCount={190} />
+        <KeyboardCanvas frameCount={189} />
         <GlobeFooter />
       </div>
     </main>
