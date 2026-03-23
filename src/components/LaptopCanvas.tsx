@@ -5,10 +5,9 @@ import { useScroll, useTransform, motion } from "framer-motion";
 
 interface LaptopCanvasProps {
   frameCount: number;
-  isSoundEnabled: boolean;
 }
 
-export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount, isSoundEnabled }) => {
+export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);

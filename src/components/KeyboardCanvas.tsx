@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useScroll, useTransform, motion, useSpring } from "framer-motion";
+import { useScroll, useTransform, motion } from "framer-motion";
 
 interface KeyboardCanvasProps {
   frameCount: number;
@@ -58,8 +58,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSo
     if (!isSoundEnabled) return;
 
     if (!audioCtxRef.current && audioRef.current) {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new Ctx();
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
       audioCtxRef.current = ctx;
 
       const source = ctx.createMediaElementSource(audioRef.current);

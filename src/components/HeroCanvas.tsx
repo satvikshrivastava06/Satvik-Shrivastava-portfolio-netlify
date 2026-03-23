@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useScroll, useTransform, useSpring } from "framer-motion";
+import { useScroll, useTransform } from "framer-motion";
 
 interface HeroCanvasProps {
   s1Count: number; // Number of images in /seq1/
@@ -68,8 +68,8 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
     if (!isSoundEnabled) return;
 
     if (!audioCtxRef.current) {
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new Ctx();
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AudioCtx();
       audioCtxRef.current = ctx;
 
       const setupGain = (audio: HTMLAudioElement, id: string) => {

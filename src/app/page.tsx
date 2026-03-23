@@ -44,7 +44,7 @@ export default function Home() {
           <div className="h-[60vh] w-full bg-transparent pointer-events-none" />
           <PlaneMorph s4Count={160} isSoundEnabled={isSoundEnabled} />
           <div className="h-[60vh] w-full bg-transparent pointer-events-none" />
-          <LaptopCanvas frameCount={125} isSoundEnabled={isSoundEnabled} />
+          <LaptopCanvas frameCount={125} />
           <KeyboardCanvas frameCount={189} isSoundEnabled={isSoundEnabled} />
           <GlobeFooter />
         </div>
