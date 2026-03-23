@@ -5,9 +5,10 @@ import { useScroll, useTransform, motion, useSpring } from "framer-motion";
 
 interface KeyboardCanvasProps {
   frameCount: number;
+  isSoundEnabled: boolean;
 }
 
-export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) => {
+export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSoundEnabled }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
@@ -48,24 +49,99 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
     });
   }, [allImagePaths, frameCount]);
 
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+
+  // Initialize Web Audio API for volume boosting
+  useEffect(() => {
+    if (!isSoundEnabled) return;
+
+    if (!audioCtxRef.current && audioRef.current) {
+      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new Ctx();
+      audioCtxRef.current = ctx;
+
+      const source = ctx.createMediaElementSource(audioRef.current);
+      const gain = ctx.createGain();
+      gain.gain.value = 1.7; 
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      gainNodeRef.current = gain;
+    }
+
+    if (audioCtxRef.current?.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+  }, [isSoundEnabled]);
+
   // 3. Scroll Mapping Logic
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 150,
-    damping: 25,
-    restDelta: 0.001
-  });
+  const scrollTimeout = useRef<NodeJS.Timeout>();
 
-  const frameIndex = useTransform(smoothProgress, (latest: number) =>
+  const frameIndex = useTransform(scrollYProgress, (latest: number) =>
     Math.min(
       frameCount - 1,
-      Math.floor(latest * (frameCount + 1)) // Add small buffer to reach last frame faster
+      Math.floor(latest * (frameCount + 1)) 
     )
   );
+
+  // Audio Sync Effect -> Mapped absolutely to extracted Frames Per Second (FPS)
+  const AUDIO_FPS = 30;
+
+  useEffect(() => {
+    const syncAudio = () => {
+      const audio = audioRef.current;
+      const ctx = audioCtxRef.current;
+      const gain = gainNodeRef.current;
+      if (!audio || !ctx || !gain) return;
+      
+      // We use the raw scrollYProgress to determine bounds
+      const progress = scrollYProgress.get();
+      const inBounds = isSoundEnabled && progress > 0 && progress < 1;
+
+      // Handle Gain/Volume transitions smoothly (Raw-Sync style)
+      const targetValue = inBounds ? 1.7 : 0;
+      gain.gain.setTargetAtTime(targetValue, ctx.currentTime, 0.015);
+
+      if (!inBounds) {
+        clearTimeout(scrollTimeout.current);
+        scrollTimeout.current = setTimeout(() => {
+          if (scrollYProgress.get() <= 0 || scrollYProgress.get() >= 1) {
+             audio.pause();
+          }
+        }, 100);
+        return;
+      }
+
+      // Sync strictly by frame index
+      const idx = frameIndex.get();
+      const targetTime = idx / AUDIO_FPS;
+
+      // Unmute and ensure playing
+      if (audio.muted) audio.muted = false;
+      if (audio.paused) audio.play().catch(() => {});
+
+      if (Math.abs(audio.currentTime - targetTime) > 0.01) {
+        audio.currentTime = targetTime;
+      }
+      
+      clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = setTimeout(() => {
+        gain.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
+      }, 150);
+    };
+
+    const unsubscribe = frameIndex.on("change", syncAudio);
+    return () => {
+      unsubscribe();
+      clearTimeout(scrollTimeout.current);
+    };
+  }, [frameIndex, scrollYProgress, isSoundEnabled]);
 
   // 4. Render Loop
   useEffect(() => {
@@ -144,6 +220,9 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount }) =>
           }}
           className="absolute inset-0 z-0 pointer-events-none"
         />
+
+        {/* Hidden Audio Source */}
+        <audio ref={audioRef} src="/Keyboard opening/video.mp4" preload="auto" muted loop />
       </div>
     </div>
   );

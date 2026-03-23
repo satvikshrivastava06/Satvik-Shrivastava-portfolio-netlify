@@ -5,9 +5,10 @@ import { useScroll, useTransform, motion } from "framer-motion";
 
 interface PlaneMorphProps {
   s4Count: number;
+  isSoundEnabled: boolean;
 }
 
-export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count }) => {
+export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count, isSoundEnabled }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
@@ -48,15 +49,69 @@ export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count }) => {
     });
   }, [allImagePaths, s4Count]);
 
+  const audioRef = useRef<HTMLAudioElement>(null);
   // 3. Scroll Mapping Logic
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  // Map 0-0.45 scroll progress to 0-159 index.
-  // We compress the canvas animation to the first 45% of the 500vh sticky range.
+  // Map 0-0.45 scroll progress to 0-160 index (seq4 sequence images)
   const currentIndex = useTransform(scrollYProgress, [0, 0.45, 1], [0, s4Count - 1, s4Count - 1]);
+  
+  // High-Performance Sync Engine
+  const AUDIO_FPS = 30;
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    let rafId: number;
+    
+    const update = () => {
+      const progress = scrollYProgress.get();
+      
+      // Strict Boundary Control - Silence outside seq4
+      const inBounds = isSoundEnabled && progress > 0 && progress < 0.45;
+
+      if (!inBounds) {
+        if (!audio.paused) {
+          audio.pause();
+          audio.playbackRate = 1.0;
+        }
+        rafId = requestAnimationFrame(update);
+        return;
+      }
+
+      // 1. Calculate the Visual Target Time
+      const currentFrame = Math.floor(currentIndex.get());
+      const targetTime = currentFrame / AUDIO_FPS;
+
+      // 2. Playback logic
+      if (audio.muted) audio.muted = false;
+      if (audio.paused) audio.play().catch(() => {});
+
+      // 3. "CHASER" ENGINE: Adjust playback speed to match scroll velocity
+      const error = targetTime - audio.currentTime;
+      
+      // If we are way off (e.g. fast scrolling or jump), seek directly
+      if (Math.abs(error) > 0.25) {
+        audio.currentTime = targetTime;
+        audio.playbackRate = 1.0;
+      } else {
+        // Otherwise, smoothly "chase" the target time by subtly shifting the pitch/speed
+        // Kp = 2.0 (Proportional Gain)
+        const rate = 1.0 + (error * 2.5);
+        audio.playbackRate = Math.max(0.5, Math.min(3.0, rate));
+      }
+
+      rafId = requestAnimationFrame(update);
+    };
+
+    rafId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(rafId);
+  }, [currentIndex, scrollYProgress, isSoundEnabled, s4Count]);
+
 
   // 4. Render Loop
   useEffect(() => {
@@ -162,6 +217,9 @@ export const PlaneMorph: React.FC<PlaneMorphProps> = ({ s4Count }) => {
             />
           </>
         )}
+        
+        {/* Hidden Audio Source */}
+        <audio ref={audioRef} src="/seq4/video.mp4" preload="auto" muted loop />
       </div>
     </div>
   );
