@@ -68,6 +68,9 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSo
       source.connect(gain);
       gain.connect(ctx.destination);
       gainNodeRef.current = gain;
+      
+      // Pre-warm to combat starting delay
+      audioRef.current.play().then(() => audioRef.current?.pause()).catch(() => {});
     }
 
     if (audioCtxRef.current?.state === 'suspended') {
@@ -126,7 +129,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSo
       if (audio.muted) audio.muted = false;
       if (audio.paused) audio.play().catch(() => {});
 
-      if (Math.abs(audio.currentTime - targetTime) > 0.01) {
+      // Only seek if scroll drifted from natural playback, preventing stuttering and sync issues
+      if (Math.abs(audio.currentTime - targetTime) > 0.1) {
         audio.currentTime = targetTime;
       }
       
@@ -168,7 +172,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSo
           let drawWidth, drawHeight;
 
           // "Zoom-out" -> Using contain logic (100% proportion)
-          const scaleFactor = 1.15; // Zoom-in a little (reduced slightly)
+          const scaleFactor = 1.0; // Zoomed out slightly 
           if (canvasAspect > imgAspect) {
             drawHeight = canvas.height * scaleFactor;
             drawWidth = canvas.height * imgAspect * scaleFactor;
@@ -194,8 +198,8 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps> = ({ frameCount, isSo
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        // High DPI scaling (Sharper resolution, capped for performance)
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // High DPI scaling (Sharper resolution, upscaled)
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
         canvasRef.current.width = window.innerWidth * dpr;
         canvasRef.current.height = window.innerHeight * dpr;
       }

@@ -82,9 +82,19 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
         gainNodesRef.current[id] = gain;
       };
 
-      if (audio1Ref.current) setupGain(audio1Ref.current, 'a1');
-      if (audio2Ref.current) setupGain(audio2Ref.current, 'a2');
-      if (audio3Ref.current) setupGain(audio3Ref.current, 'a3');
+      if (audio1Ref.current) {
+        setupGain(audio1Ref.current, 'a1');
+        // Pre-warm to combat starting delay
+        audio1Ref.current.play().then(() => audio1Ref.current?.pause()).catch(() => {});
+      }
+      if (audio2Ref.current) {
+        setupGain(audio2Ref.current, 'a2');
+        audio2Ref.current.play().then(() => audio2Ref.current?.pause()).catch(() => {});
+      }
+      if (audio3Ref.current) {
+        setupGain(audio3Ref.current, 'a3');
+        audio3Ref.current.play().then(() => audio3Ref.current?.pause()).catch(() => {});
+      }
     }
 
     if (audioCtxRef.current.state === 'suspended') {
@@ -162,8 +172,8 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
       if (activeAudio.muted) activeAudio.muted = false;
       if (activeAudio.paused) activeAudio.play().catch(() => {});
 
-      // Instant seek to match the discrete frame exactly
-      if (Math.abs(activeAudio.currentTime - targetTime) > 0.01) {
+      // Only seek if scroll drifted from natural playback, preventing stuttering and sync issues
+      if (Math.abs(activeAudio.currentTime - targetTime) > 0.1) {
         activeAudio.currentTime = targetTime;
       }
 
@@ -200,8 +210,8 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
           const imgAspect = img.width / img.height;
           let drawWidth, drawHeight;
 
-          // "Zoom in a little" -> Scale up the contain logic by 1.2x
-          const zoomFactor = 1.2;
+          // Zoom out slightly from previous 1.2x, while maintaining some coverage
+          const zoomFactor = 1.05;
 
           if (canvasAspect > imgAspect) {
             drawHeight = canvas.height * zoomFactor;
@@ -233,7 +243,8 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // Upscale canvas resolution for better quality
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
         canvasRef.current.width = window.innerWidth * dpr;
         canvasRef.current.height = window.innerHeight * dpr;
       }

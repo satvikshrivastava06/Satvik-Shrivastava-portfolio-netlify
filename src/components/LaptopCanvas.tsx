@@ -84,18 +84,17 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
           const imgAspect = img.width / img.height;
           let drawWidth, drawHeight, offsetX, offsetY;
 
-          // "Maintain image proportions to 100%" -> Using contain logic
+          // "Maintain image proportions to 100%" -> Using contain logic, zoomed out slightly
+          const scaleFactor = 0.95;
           if (canvasAspect > imgAspect) {
-            drawHeight = canvas.height;
-            drawWidth = canvas.height * imgAspect;
-            offsetX = (canvas.width - drawWidth) / 2;
-            offsetY = 0;
+            drawHeight = canvas.height * scaleFactor;
+            drawWidth = canvas.height * imgAspect * scaleFactor;
           } else {
-            drawWidth = canvas.width;
-            drawHeight = canvas.width / imgAspect;
-            offsetX = 0;
-            offsetY = (canvas.height - drawHeight) / 2;
+            drawWidth = canvas.width * scaleFactor;
+            drawHeight = canvas.width / imgAspect * scaleFactor;
           }
+          offsetX = (canvas.width - drawWidth) / 2;
+          offsetY = (canvas.height - drawHeight) / 2;
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
@@ -112,8 +111,8 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        // High DPI scaling (Sharper resolution, capped for performance)
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // High DPI scaling (Sharper resolution, upscaled)
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
         canvasRef.current.width = window.innerWidth * dpr;
         canvasRef.current.height = window.innerHeight * dpr;
       }
