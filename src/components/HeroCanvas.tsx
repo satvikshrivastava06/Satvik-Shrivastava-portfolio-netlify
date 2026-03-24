@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useScroll, useTransform } from "framer-motion";
 
 interface HeroCanvasProps {
@@ -17,45 +17,55 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
   const [isLoaded, setIsLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const totalFrames = s1Count + s2Count + s3Count;
 
-  // 1. Generate Image Paths
-  const allImagePaths = useMemo(() => {
-    const paths: string[] = [];
-    for (let i = 1; i <= s1Count; i++) paths.push(`/seq1/ezgif-frame-${String(i).padStart(3, '0')}.png`);
-    for (let i = 1; i <= s2Count; i++) paths.push(`/seq2/ezgif-frame-${String(i).padStart(3, '0')}.png`);
-    for (let i = 1; i <= s3Count; i++) paths.push(`/seq3/ezgif-frame-${String(i).padStart(3, '0')}.png`);
-    return paths;
-  }, [s1Count, s2Count, s3Count]);
-
-  // 2. Preload Images
+  // 2. Progressive Preload: unlock after s1, then load s2+s3 in background
   useEffect(() => {
-    let loadedCount = 0;
-    const loadedImages: HTMLImageElement[] = [];
+    const allLoaded: HTMLImageElement[] = [];
+    let s1Loaded = 0;
 
-    const updateProgress = () => {
-      loadedCount++;
-      setProgress(Math.floor((loadedCount / totalFrames) * 100));
-      if (loadedCount === totalFrames) {
-        setImages(loadedImages);
-        setIsLoaded(true);
-      }
-    };
-
-    allImagePaths.forEach((path, index) => {
+    const loadImage = (path: string, index: number, onDone?: () => void) => {
       const img = new Image();
-      // Set handlers BEFORE src to avoid race conditions with cache
       img.onload = () => {
-        loadedImages[index] = img;
-        updateProgress();
+        allLoaded[index] = img;
+        setImages([...allLoaded]);
+        if (onDone) onDone();
       };
       img.onerror = () => {
-        console.error(`Failed to load image: ${path}`);
-        updateProgress();
+        if (onDone) onDone();
       };
       img.src = path;
+    };
+
+    // Phase 1: load s1 images first → unlock the site as soon as they're ready
+    const s1Paths: string[] = [];
+    for (let i = 1; i <= s1Count; i++)
+      s1Paths.push(`/seq1/ezgif-frame-${String(i).padStart(3, '0')}.png`);
+
+    s1Paths.forEach((path, i) => {
+      loadImage(path, i, () => {
+        s1Loaded++;
+        setProgress(Math.floor((s1Loaded / s1Count) * 60)); // 0-60% for s1
+        if (s1Loaded === s1Count) {
+          setIsLoaded(true); // ← Unlock the page now!
+
+          // Phase 2: silently load s2 + s3 in the background
+          let bgLoaded = 0;
+          const bgTotal = s2Count + s3Count;
+          const loadBg = (path: string, index: number) => {
+            loadImage(path, index, () => {
+              bgLoaded++;
+              setProgress(60 + Math.floor((bgLoaded / bgTotal) * 40)); // 60-100%
+            });
+          };
+          for (let j = 1; j <= s2Count; j++)
+            loadBg(`/seq2/ezgif-frame-${String(j).padStart(3, '0')}.png`, s1Count + j - 1);
+          for (let j = 1; j <= s3Count; j++)
+            loadBg(`/seq3/ezgif-frame-${String(j).padStart(3, '0')}.png`, s1Count + s2Count + j - 1);
+        }
+      });
     });
-  }, [allImagePaths, totalFrames]);
+  }, [s1Count, s2Count, s3Count]);
+
 
   const audio1Ref = useRef<HTMLAudioElement>(null);
   const audio2Ref = useRef<HTMLAudioElement>(null);
@@ -115,7 +125,7 @@ export const HeroCanvas: React.FC<HeroCanvasProps> = ({ s1Count, s2Count, s3Coun
   const currentIndex = useTransform(
     scrollYProgress, 
     [0, 0.4, 0.55, 0.75, 0.8, 1], 
-    [0, s1Count, s1Count + s2Count, s1Count + s2Count + s3Count - 1, totalFrames - 1, totalFrames - 1]
+    [0, s1Count, s1Count + s2Count, s1Count + s2Count + s3Count - 1, s1Count + s2Count + s3Count - 1, s1Count + s2Count + s3Count - 1]
   );
   
   const scrollTimeout = useRef<NodeJS.Timeout>();

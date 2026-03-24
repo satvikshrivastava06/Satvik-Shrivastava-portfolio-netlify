@@ -1,0 +1,21 @@
+# Cache all sequence images aggressively for 1 year (immutable)
+/seq1/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/seq2/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/seq3/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/seq4/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/seq5/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/Keyboard%20opening/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/laptop%20opening/*
+  Cache-Control: public, max-age=31536000, immutable

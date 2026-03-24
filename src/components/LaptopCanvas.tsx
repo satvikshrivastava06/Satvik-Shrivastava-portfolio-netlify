@@ -82,19 +82,16 @@ export const LaptopCanvas: React.FC<LaptopCanvasProps> = ({ frameCount }) => {
         if (img) {
           const canvasAspect = canvas.width / canvas.height;
           const imgAspect = img.width / img.height;
-          let drawWidth, drawHeight, offsetX, offsetY;
-
           // "Maintain image proportions to 100%" -> Using contain logic, zoomed out slightly
           const scaleFactor = 0.95;
-          if (canvasAspect > imgAspect) {
-            drawHeight = canvas.height * scaleFactor;
-            drawWidth = canvas.height * imgAspect * scaleFactor;
-          } else {
-            drawWidth = canvas.width * scaleFactor;
-            drawHeight = canvas.width / imgAspect * scaleFactor;
-          }
-          offsetX = (canvas.width - drawWidth) / 2;
-          offsetY = (canvas.height - drawHeight) / 2;
+          const drawWidth = canvasAspect > imgAspect
+            ? canvas.height * imgAspect * scaleFactor
+            : canvas.width * scaleFactor;
+          const drawHeight = canvasAspect > imgAspect
+            ? canvas.height * scaleFactor
+            : canvas.width / imgAspect * scaleFactor;
+          const offsetX = (canvas.width - drawWidth) / 2;
+          const offsetY = (canvas.height - drawHeight) / 2;
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
